@@ -144,7 +144,6 @@ namespace PerpustakaanApi.Controllers
             searchList1.AddRange(searchParameter.Replace("||", "").Replace("&&", "").Split(" ").ToList());
             searchList2.AddRange(searchParameter.Replace("||", "").Replace(" ", "").Split("&&").ToList());
 
-
             if(searchList1.Count > 1 || searchList2.Count > 1)
             {
                 var totalSort = new List<Book>(); totalSort.AddRange(total);
@@ -509,7 +508,6 @@ namespace PerpustakaanApi.Controllers
                        select new { s, u };
 
             var st = book.FirstOrDefault();
-            
 
             var result = new
             {
