@@ -228,8 +228,8 @@ namespace PerpustakaanApi.Controllers
             foreach(var i in st)
             {
                 i.Category = null;
-                await _context.SaveChangesAsync();
             }
+            await _context.SaveChangesAsync();
 
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();

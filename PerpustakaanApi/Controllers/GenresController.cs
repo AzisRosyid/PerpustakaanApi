@@ -218,21 +218,21 @@ namespace PerpustakaanApi.Controllers
             if (!valid.IsValid) { return Unauthorized(new { errors = "Access Unauthorized!" }); }
             if (valid.Role != UserRole.Admin) { return StatusCode(403, new { errors = "User Role must be Admin!" }); }
 
-            var category = await _context.Categories.FindAsync(id);
+            var genre = await _context.Genres.FindAsync(id);
 
-            if (category == null)
+            if (genre == null)
             {
-                return NotFound(new { errors = "Category Not Found!" });
+                return NotFound(new { errors = "Genre Not Found!" });
             }
 
             var st = _context.BookGenres.Where(s => s.GenreId == id);
             foreach(var i in st)
             {
                 _context.BookGenres.Remove(i);
-                await _context.SaveChangesAsync();
             }
+            await _context.SaveChangesAsync();
 
-            _context.Categories.Remove(category);
+            _context.Genres.Remove(genre);
             await _context.SaveChangesAsync();
 
             return Ok(new { messages = "Genre successfully Deleted!" });
