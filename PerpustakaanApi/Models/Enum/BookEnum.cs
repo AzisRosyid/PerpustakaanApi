@@ -12,10 +12,20 @@ namespace PerpustakaanApi.Models.Enum
             Popularity,
             [EnumMember(Value = "Favorite")]
             Favorite,
+            [EnumMember(Value = "Id")]
+            Id,
+            [EnumMember(Value = "Title")]
+            Title,
+            [EnumMember(Value = "Author")]
+            Author,
+            [EnumMember(Value = "Publisher")]
+            Publisher,
+            [EnumMember(Value = "Total Page")]
+            TotalPage,
             [EnumMember(Value = "Date Updated")]
             DateUpdated,
             [EnumMember(Value = "Date Created")]
-            DateCreated,
+            DateCreated
         }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -28,5 +38,6 @@ namespace PerpustakaanApi.Models.Enum
             [EnumMember(Value = "Lite")]
             Lite
         }
+
     }
 }

@@ -23,7 +23,7 @@ namespace PerpustakaanApi.Models
         [Required]
         [DataType(DataType.Password)]
         [MinLength(8)]
-        [RegularExpression("([0-9]+)")]
+/*        [RegularExpression("([0-9]+)")]*/
         public string Password { get; set; } = null!;
 
         [BindRequired]

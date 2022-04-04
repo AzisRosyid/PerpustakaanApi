@@ -30,7 +30,7 @@ namespace PerpustakaanApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<IEnumerable<User>>> GetUser(int? page = 1, int? pick = 20, string search = "", UserRole? role = null, UserGender? gender = null, Order? order = null, bool android = false)
+        public async Task<ActionResult<IEnumerable<User>>> GetUser(int? page = 1, int? pick = 20, string search = "", UserRole? role = null, UserGender? gender = null, UserSort? sort = null, Order? order = null, bool android = false)
         {
             var valid = Method.Decode(auth());
             if (!valid.IsValid) { return StatusCode(401, new { errors = "Access Unauthorized!" }); }
@@ -71,10 +71,52 @@ namespace PerpustakaanApi.Controllers
                 st = st.Where(s => s.Gender == gender).ToList();
             }
 
-            if (order != Order.Ascending)
+            if (sort == UserSort.Id)
+            {
+                st = st.OrderBy(s => s.Id).ToList();
+            }
+            else if (sort == UserSort.Name)
+            {
+                st = st.OrderBy(s => s.Name).ToList();
+            }
+            else if (sort == UserSort.Email)
+            {
+                st = st.OrderBy(s => s.Email).ToList();
+            }
+            else if (sort == UserSort.Role)
+            {
+                st = st.OrderBy(s => s.Role).ToList();
+            }
+            else if (sort == UserSort.Gender)
+            {
+                st = st.OrderBy(s => s.Gender).AsEnumerable().Reverse().ToList();
+            }
+            else if (sort == UserSort.DateOfBirth)
+            {
+                st = st.OrderBy(s => s.DateOfBirth).AsEnumerable().Reverse().ToList();
+            }
+            else if (sort == UserSort.PhoneNumber)
+            {
+                st = st.OrderBy(s => s.PhoneNumber).ToList();
+            }
+            else if (sort == UserSort.DateCreated)
+            {
+                st = st.OrderBy(s => s.DateCreated).AsEnumerable().Reverse().ToList();
+            }
+            else if (sort == UserSort.DateUpdated)
+            {
+                st = st.OrderBy(s => s.DateUpdated).AsEnumerable().Reverse().ToList();
+            }
+            else
+            {
+                st = st.OrderBy(s => s.Id).AsEnumerable().Reverse().ToList();
+            }
+
+            if (order == Order.Descending)
             {
                 st = st.AsEnumerable().Reverse().ToList();
             }
+
 
             if (!st.Any())
             {

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using PerpustakaanApi.Models;
 using PerpustakaanApi.Models.Parameter;
+using static PerpustakaanApi.Models.Enum.CategoryEnum;
 using static PerpustakaanApi.Models.Enum.OrderEnum;
 using static PerpustakaanApi.Models.Enum.UserEnum;
 
@@ -58,7 +59,7 @@ namespace PerpustakaanApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories(int? page = 1, int? pick = 20, string search = "", Order? order = null, bool android = false)
+        public async Task<ActionResult<IEnumerable<Category>>> GetCategories(int? page = 1, int? pick = 20, string search = "", CategorySort? sort = null, Order? order = null, bool android = false)
         {
             var st = new List<GetCategoryParameter>();
             var catagories = _context.Categories.Where(s => s.Id.ToString().Contains(search) || s.Name.Contains(search));
@@ -72,7 +73,20 @@ namespace PerpustakaanApi.Controllers
                 return NotFound(new { errors = "Category Not Found!" });
             }
 
-            if(order != Order.Ascending)
+            if (sort == CategorySort.Id)
+            {
+                st = st.OrderBy(s => s.Id).ToList();
+            }
+            else if (sort == CategorySort.Name)
+            {
+                st = st.OrderBy(s => s.Name).ToList();
+            }
+            else
+            {
+                st = st.OrderBy(s => s.Id).AsEnumerable().Reverse().ToList();
+            }
+
+            if (order == Order.Descending)
             {
                 st = st.AsEnumerable().Reverse().ToList();
             }

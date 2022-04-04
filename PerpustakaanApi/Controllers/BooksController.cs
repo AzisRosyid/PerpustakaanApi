@@ -76,24 +76,141 @@ namespace PerpustakaanApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<Book>>> GetBooks([FromForm] SearchBookParameter searchBookParameter)
         {
-            string search = searchBookParameter.Search;
-            if (search == null) { search = string.Empty; }
-            var st1 = from s in _context.Books
-                      join c in _context.Categories on s.Category equals c.Id
-                      where c.Name.Contains(search)
-                      select s;
-            var st2 = from s in _context.Books
-                      join t in _context.BookGenres on s.Id equals t.BookId
-                      join g in _context.Genres on t.GenreId equals g.Id
-                      where g.Name.Contains(search)
-                      select s;
-            var st3 = from s in _context.Books
-                      join u in _context.Users on s.UserId equals u.Id
-                      where s.Id.Contains(search) || s.Title.Contains(search) || s.Author.Contains(search) || s.Publisher.Contains(search) || s.Description.Contains(search) || s.Page.ToString().Contains(search) || s.Image.Contains(search) || s.Download.Contains(search) || s.DateCreated.ToString().Contains(search) || s.DateUpdated.ToString().Contains(search) || u.Name.Contains(search)
-                      select s;
+            string searchParameter = searchBookParameter.Search;
+            if (searchParameter == null) { searchParameter = String.Empty; }
+
             var st = new List<GetBookParameter>();
             var total = new List<Book>();
-            total.AddRange(st1); total.AddRange(st2); total.AddRange(st3);
+            var searchList = new List<string>();
+
+            searchList.Add(searchParameter);
+            searchList.AddRange(searchParameter.Replace("&&", "").Replace(" ", "").Split("||").ToList());
+            searchList.AddRange(searchParameter.Replace("&&", "").Replace("||", "").Split(" ").ToList());
+            searchList.AddRange(searchParameter.Replace(" ", "").Replace("||", "").Split("&&").ToList());
+
+            foreach (var search in searchList)
+            {
+                if(search != "")
+                {
+                    var st1 = from s in _context.Books
+                              join c in _context.Categories on s.Category equals c.Id
+                              where c.Name.Contains(search)
+                              select s;
+                    var st2 = from s in _context.Books
+                              join t in _context.BookGenres on s.Id equals t.BookId
+                              join g in _context.Genres on t.GenreId equals g.Id
+                              where g.Name.Contains(search)
+                              select s;
+                    var st3 = from s in _context.Books
+                              join u in _context.Users on s.UserId equals u.Id
+                              where s.Id.Contains(search) || s.Title.Contains(search) || s.Author.Contains(search) || s.Publisher.Contains(search) || s.Description.Contains(search) || s.Page.ToString().Contains(search) || s.Image.Contains(search) || s.Download.Contains(search) || s.DateCreated.ToString().Contains(search) || s.DateUpdated.ToString().Contains(search) || u.Name.Contains(search)
+                              select s;
+
+                    total.AddRange(st1); total.AddRange(st2); total.AddRange(st3);
+                }
+            }
+
+            if (!total.Any())
+            {
+                var search = searchParameter;
+                var st1 = from s in _context.Books
+                          join c in _context.Categories on s.Category equals c.Id
+                          where c.Name.Contains(search)
+                          select s;
+                var st2 = from s in _context.Books
+                          join t in _context.BookGenres on s.Id equals t.BookId
+                          join g in _context.Genres on t.GenreId equals g.Id
+                          where g.Name.Contains(search)
+                          select s;
+                var st3 = from s in _context.Books
+                          join u in _context.Users on s.UserId equals u.Id
+                          where s.Id.Contains(search) || s.Title.Contains(search) || s.Author.Contains(search) || s.Publisher.Contains(search) || s.Description.Contains(search) || s.Page.ToString().Contains(search) || s.Image.Contains(search) || s.Download.Contains(search) || s.DateCreated.ToString().Contains(search) || s.DateUpdated.ToString().Contains(search) || u.Name.Contains(search)
+                          select s;
+
+                total.AddRange(st1); total.AddRange(st2); total.AddRange(st3);
+            }
+
+            var totalCom = new List<Book>(); totalCom.AddRange(total);
+            total.Clear();
+            foreach(var i in totalCom)
+            {
+                if(!total.Any(s => s.Id == i.Id))
+                {
+                    total.Add(i);
+                }
+            }
+
+            var searchList1 = new List<string>(); var searchList2 = new List<string>();
+            searchList1.AddRange(searchParameter.Replace("||", "").Replace("&&", "").Split(" ").ToList());
+            searchList2.AddRange(searchParameter.Replace("||", "").Replace(" ", "").Split("&&").ToList());
+
+
+            if(searchList1.Count > 1 || searchList2.Count > 1)
+            {
+                var totalSort = new List<Book>(); totalSort.AddRange(total);
+                var bookSort = new List<Book>();
+                total.Clear();
+                
+                if(searchList1.Count > 1)
+                {
+                    var st1 = new List<Book>(); var st2 = new List<Book>(); var st3 = new List<Book>();
+                    st1.AddRange(totalSort); st2.AddRange(totalSort); st3.AddRange(totalSort);
+                   
+                    foreach (var search in searchList1)
+                    {
+                        if (search != "")
+                        {
+                            var st1c = _context.Categories.Where(s => s.Name.Contains(search)).OrderBy(s => s.Name).FirstOrDefault();
+                            long st1cId;
+                            if (st1c == null) { st1cId = 0; } else { st1cId = st1c.Id; }
+                            st1 = st1.Where(s => s.Category == st1cId).ToList();
+
+                            var st2g = _context.Genres.Where(s => s.Name.Contains(search)).OrderBy(s => s.Name).FirstOrDefault();
+                            long st2gId;
+                            if (st2g == null) { st2gId = 0; } else { st2gId = st2g.Id; }
+                            var st2bg = _context.BookGenres.Where(s => s.GenreId == st2gId).ToList();
+                            st2 = st2.Where(s => st2bg.Any(x => x.BookId == s.Id)).ToList();
+
+                            st3 = st3.Where(s => s.Id.Contains(search) || s.Title.Contains(search) || s.Author.Contains(search) || s.Publisher.Contains(search) || s.Description.Contains(search) || s.Page.ToString().Contains(search) || s.Image.Contains(search) || s.Download.Contains(search) || s.DateCreated.ToString().Contains(search) || s.DateUpdated.ToString().Contains(search) || _context.Users.Where(x => x.Id == s.UserId).FirstOrDefault().Name.Contains(search)).ToList();
+                        }
+                    }
+                    bookSort.AddRange(st1); bookSort.AddRange(st2); bookSort.AddRange(st3);
+                }
+
+                if(searchList2.Count > 1)
+                {
+                    var st1 = new List<Book>(); var st2 = new List<Book>(); var st3 = new List<Book>();
+                    st1.AddRange(totalSort); st2.AddRange(totalSort); st3.AddRange(totalSort);
+                    foreach (var search in searchList2)
+                    {
+                        if (search != "")
+                        {
+                            var st1c = _context.Categories.Where(s => s.Name.Contains(search)).OrderBy(s => s.Name).FirstOrDefault();
+                            long st1cId;
+                            if (st1c == null) { st1cId = 0; } else { st1cId = st1c.Id; }
+                            st1 = st1.Where(s => s.Category == st1cId).ToList();
+
+                            var st2g = _context.Genres.Where(s => s.Name.Contains(search)).OrderBy(s => s.Name).FirstOrDefault();
+                            long st2gId;
+                            if (st2g == null) { st2gId = 0; } else { st2gId = st2g.Id; }
+                            var st2bg = _context.BookGenres.Where(s => s.GenreId == st2gId).ToList();
+                            st2 = st2.Where(s => st2bg.Any(x => x.BookId == s.Id)).ToList();
+
+                            st3 = st3.Where(s => s.Id.Contains(search) || s.Title.Contains(search) || s.Author.Contains(search) || s.Publisher.Contains(search) || s.Description.Contains(search) || s.Page.ToString().Contains(search) || s.Image.Contains(search) || s.Download.Contains(search) || s.DateCreated.ToString().Contains(search) || s.DateUpdated.ToString().Contains(search) || _context.Users.Where(x => x.Id == s.UserId).FirstOrDefault().Name.Contains(search)).ToList();
+                        }
+                    }
+                    bookSort.AddRange(st1); bookSort.AddRange(st2); bookSort.AddRange(st3);
+                }
+
+                foreach (var i in bookSort)
+                {
+                    if (!total.Any(s => s.Id == i.Id))
+                    {
+                        total.Add(i);
+                    }
+                }
+            }
+            
             foreach(var i in total)
             {
                 if(!st.Any(s => s.Id == i.Id))
@@ -102,6 +219,7 @@ namespace PerpustakaanApi.Controllers
                                   join t in _context.BookGenres on s.Id equals t.BookId
                                   join g in _context.Genres on t.GenreId equals g.Id
                                   where s.Id == i.Id
+                                  orderby g.Name
                                   select g;
                     var genreParameter = new List<GetGenreParameter>();
                     foreach(var j in genres1)
@@ -192,23 +310,6 @@ namespace PerpustakaanApi.Controllers
                 }
             }
 
-            if (searchBookParameter.Sort == BookSort.Popularity)
-            {
-                st = st.OrderBy(s => s.ViewCount).ToList();
-            }
-            else if (searchBookParameter.Sort == BookSort.Favorite)
-            {
-                st = st.OrderBy(s => _context.Favorites.Where(x => x.BookId == s.Id).Count()).ToList();
-            }
-            else if (searchBookParameter.Sort == BookSort.DateCreated)
-            {
-                st = st.OrderBy(s => s.DateCreated).ToList();
-            }
-            else if (searchBookParameter.Sort == BookSort.DateUpdated)
-            {
-                st = st.OrderBy(s => s.DateUpdated).ToList();
-            }
-
             if (searchBookParameter.Start != null)
             {
                 st = st.Where(s => s.DateCreated >= searchBookParameter.Start).ToList();
@@ -219,7 +320,48 @@ namespace PerpustakaanApi.Controllers
                 st = st.Where(s => s.DateUpdated <= searchBookParameter.End).ToList();
             }
 
-            if (searchBookParameter.Order != Order.Ascending)
+            if (searchBookParameter.Sort == BookSort.Popularity)
+            {
+                st = st.OrderBy(s => s.ViewCount).AsEnumerable().Reverse().ToList();
+            }
+            else if (searchBookParameter.Sort == BookSort.Favorite)
+            {
+                st = st.OrderBy(s => _context.Favorites.Where(x => x.BookId == s.Id).Count()).AsEnumerable().Reverse().ToList();
+            }
+            else if (searchBookParameter.Sort == BookSort.Id)
+            {
+                st = st.OrderBy(s => s.Id).ToList();
+            }
+            else if (searchBookParameter.Sort == BookSort.Title)
+            {
+                st = st.OrderBy(s => s.Title).ToList();
+            }
+            else if (searchBookParameter.Sort == BookSort.Author)
+            {
+                st = st.OrderBy(s => s.Author).ToList();
+            }
+            else if (searchBookParameter.Sort == BookSort.Publisher)
+            {
+                st = st.OrderBy(s => s.Publisher).ToList();
+            }
+            else if (searchBookParameter.Sort == BookSort.TotalPage)
+            {
+                st = st.OrderBy(s => s.Page).AsEnumerable().Reverse().ToList();
+            }
+            else if (searchBookParameter.Sort == BookSort.DateCreated)
+            {
+                st = st.OrderBy(s => s.DateCreated).AsEnumerable().Reverse().ToList();
+            }
+            else if (searchBookParameter.Sort == BookSort.DateUpdated)
+            {
+                st = st.OrderBy(s => s.DateUpdated).AsEnumerable().Reverse().ToList();
+            }
+            else
+            {
+                st = st.OrderBy(s => s.Id).AsEnumerable().Reverse().ToList();
+            }
+
+            if (searchBookParameter.Order == Order.Descending)
             {
                 st = st.AsEnumerable().Reverse().ToList();
             } 
@@ -340,6 +482,7 @@ namespace PerpustakaanApi.Controllers
                          join t in _context.BookGenres on s.Id equals t.BookId
                          join g in _context.Genres on t.GenreId equals g.Id
                          where s.Id == id
+                         orderby g.Name
                          select g;
             var genreParameter = new List<GetGenreParameter>();
             foreach (var i in genres)
