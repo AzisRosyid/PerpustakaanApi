@@ -8,6 +8,8 @@ namespace PerpustakaanApi.Models.Enum
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum CategorySort
         {
+            [EnumMember(Value = "Popularity")]
+            Popularity,
             [EnumMember(Value = "Id")]
             Id,
             [EnumMember(Value = "Name")]

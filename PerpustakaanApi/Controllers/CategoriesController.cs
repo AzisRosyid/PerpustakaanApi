@@ -62,10 +62,15 @@ namespace PerpustakaanApi.Controllers
         public async Task<ActionResult<IEnumerable<Category>>> GetCategories(int? page = 1, int? pick = 20, string search = "", CategorySort? sort = null, Order? order = null, bool android = false)
         {
             var st = new List<GetCategoryParameter>();
-            var catagories = _context.Categories.Where(s => s.Id.ToString().Contains(search) || s.Name.Contains(search));
+            var catagories = _context.Categories.Where(s => s.Id.ToString().Contains(search) || s.Name.Contains(search)).Select(s => new
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Tags = _context.Books.Where(x => x.Category == s.Id).Count()
+            });
             foreach (var i in catagories)
             {
-                st.Add(new GetCategoryParameter { Id = i.Id, Name = i.Name });
+                st.Add(new GetCategoryParameter { Id = i.Id, Name = i.Name, Tags = i.Tags });
             }
 
             if (!st.Any())
@@ -73,7 +78,12 @@ namespace PerpustakaanApi.Controllers
                 return NotFound(new { errors = "Category Not Found!" });
             }
 
-            if (sort == CategorySort.Id)
+            if (sort == CategorySort.Popularity)
+            {
+                st = st.OrderBy(s => s.Name).AsEnumerable().Reverse().ToList();
+                st = st.OrderBy(s => s.Tags).AsEnumerable().Reverse().ToList();
+            }
+            else if (sort == CategorySort.Id)
             {
                 st = st.OrderBy(s => s.Id).ToList();
             }
@@ -153,7 +163,7 @@ namespace PerpustakaanApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> PutCategory(int id, [BindRequired, Required, StringLength(50)] string Name)
+        public async Task<IActionResult> PutCategory(int id, CategoryParameter categoryParameter)
         {
             var valid = Method.Decode(auth());
             if (!valid.IsValid) { return Unauthorized(new { errors = "Access Unauthorized!" }); }
@@ -162,7 +172,7 @@ namespace PerpustakaanApi.Controllers
             if (!_context.Categories.Any(s => s.Id == id)) { return NotFound(new { errors = "Category Not Found!" }); }
 
             var st = _context.Categories.Where(s => s.Id == id).FirstOrDefault();
-            st.Name = Name;
+            st.Name = categoryParameter.Name;
 
             _context.Entry(st).State = EntityState.Modified;
 
@@ -178,7 +188,7 @@ namespace PerpustakaanApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Category>> PostCategory([BindRequired, Required, StringLength(50)] string Name)
+        public async Task<ActionResult<Category>> PostCategory(CategoryParameter categoryParameter)
         {
             var valid = Method.Decode(auth());
             if (!valid.IsValid) { return Unauthorized(new { errors = "Access Unauthorized!" }); }
@@ -187,7 +197,7 @@ namespace PerpustakaanApi.Controllers
 
             var st = new Category();
             st.Id = categoryId();
-            st.Name = Name;
+            st.Name = categoryParameter.Name;
 
             _context.Categories.Add(st);
             await _context.SaveChangesAsync();

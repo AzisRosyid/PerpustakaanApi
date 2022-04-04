@@ -62,11 +62,16 @@ namespace PerpustakaanApi.Controllers
         public async Task<ActionResult<IEnumerable<Genre>>> GetGenres(int? page = 1, int? pick = 20, string search = "", GenreSort? sort = null, Order? order = null, bool android = false)
         {
             var st = new List<GetGenreParameter>();
-            var genres = _context.Genres.Where(s => s.Id.ToString().Contains(search) || s.Name.Contains(search));
+            var genres = _context.Genres.Where(s => s.Id.ToString().Contains(search) || s.Name.Contains(search)).Select(s => new
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Tags = _context.BookGenres.Where(x => x.GenreId == s.Id).Count()
+            });
             
             foreach(var i in genres)
             {
-                st.Add(new GetGenreParameter { Id = i.Id, Name = i.Name });
+                st.Add(new GetGenreParameter { Id = i.Id, Name = i.Name, Tags = i.Tags });
             }
 
             if (!st.Any())
@@ -74,7 +79,12 @@ namespace PerpustakaanApi.Controllers
                 return NotFound(new { errors = "Genre Not Found!" });
             }
 
-            if (sort == GenreSort.Id)
+            if(sort == GenreSort.Popularity)
+            {
+                st = st.OrderBy(s => s.Name).AsEnumerable().Reverse().ToList();
+                st = st.OrderBy(s => s.Tags).AsEnumerable().Reverse().ToList();
+            }
+            else if (sort == GenreSort.Id)
             {
                 st = st.OrderBy(s => s.Id).ToList();
             }
@@ -154,7 +164,7 @@ namespace PerpustakaanApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> PutGenre(int id, [BindRequired, Required, StringLength(50)] string Name)
+        public async Task<IActionResult> PutGenre(int id, GenreParameter genreParameter)
         {
             var valid = Method.Decode(auth());
             if (!valid.IsValid) { return Unauthorized(new { errors = "Access Unauthorized!" }); }
@@ -163,7 +173,7 @@ namespace PerpustakaanApi.Controllers
             if (!_context.Genres.Any(s => s.Id == id)) { return NotFound(new { errors = "Genre Not Found!" }); }
 
             var st = _context.Genres.Where(s => s.Id == id).FirstOrDefault();
-            st.Name = Name;
+            st.Name = genreParameter.Name;
 
             _context.Entry(st).State = EntityState.Modified;
 
@@ -179,7 +189,7 @@ namespace PerpustakaanApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Genre>> PostGenre([BindRequired, Required, StringLength(50)] string Name)
+        public async Task<ActionResult<Genre>> PostGenre(GenreParameter genreParameter)
         {
             var valid = Method.Decode(auth());
             if (!valid.IsValid) { return Unauthorized(new { errors = "Access Unauthorized!" }); }
@@ -188,7 +198,7 @@ namespace PerpustakaanApi.Controllers
 
             var st = new Genre();
             st.Id = genreId();
-            st.Name = Name;
+            st.Name = genreParameter.Name;
 
             _context.Genres.Add(st);
             await _context.SaveChangesAsync();

@@ -321,6 +321,7 @@ namespace PerpustakaanApi.Controllers
 
             if (searchBookParameter.Sort == BookSort.Popularity)
             {
+                st = st.OrderBy(s => s.Title).AsEnumerable().Reverse().ToList();
                 st = st.OrderBy(s => s.ViewCount).AsEnumerable().Reverse().ToList();
             }
             else if (searchBookParameter.Sort == BookSort.Favorite)
