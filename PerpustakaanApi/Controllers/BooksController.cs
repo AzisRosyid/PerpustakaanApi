@@ -571,6 +571,7 @@ namespace PerpustakaanApi.Controllers
             if (valid.Role != UserRole.Admin && _context.Books.Where(s => s.Id == id).Select(s => s.UserId).FirstOrDefault() != valid.Id) { return StatusCode(403, new { errors = "User Role must be Admin or Owner!" }); }
             if (!ModelState.IsValid) { return BadRequest(Method.error(ModelState)); }
             if (!_context.Categories.Any(s => s.Id == bookParameter.Category && bookParameter.Category != null)) { return BadRequest(new { errors = "Category Id Not Valid!" }); }
+            if (!_context.Users.Any(s => s.Id == bookParameter.User && bookParameter.Category != null)) { return BadRequest(new { errors = "User Id Not Valid!" }); }
 
             var genres = new List<int>();
 
@@ -706,6 +707,7 @@ namespace PerpustakaanApi.Controllers
             if (!valid.IsValid) { return Unauthorized(new { errors = "Access Unauthorized!" }); } 
             if (!ModelState.IsValid) { return BadRequest(Method.error(ModelState)); }
             if (!_context.Categories.Any(s => s.Id == bookParameter.Category && bookParameter.Category != null)) { return BadRequest(new { errors = "Category Id Not Valid!"}); }
+            if (!_context.Users.Any(s => s.Id == bookParameter.User && bookParameter.Category != null)) { return BadRequest(new { errors = "User Id Not Valid!" }); }
 
             var genres = new List<int>();
 
