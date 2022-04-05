@@ -10,7 +10,7 @@ namespace PerpustakaanApi.Models.Parameter
         [Required]
         [StringLength(150)]
         public string Title { get; set; } = null!;
-
+        
         public int? User { get; set; }
 
         public int? Category { get; set; }
