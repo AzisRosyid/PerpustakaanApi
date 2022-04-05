@@ -227,6 +227,7 @@ namespace PerpustakaanApi.Controllers
                         {
                             Id = j.Id,
                             Name = j.Name,
+                            Tags = _context.BookGenres.Where(s => s.GenreId == j.Id).Count()
                         });
                     }
                     var category1 = _context.Categories.Where(s => s.Id == i.Category);
@@ -238,6 +239,7 @@ namespace PerpustakaanApi.Controllers
                         {
                             Id = id.Id,
                             Name = id.Name,
+                            Tags = _context.Books.Where(s => s.Category == id.Id).Count()
                         };
                     };
                     var user1 = _context.Users.Where(s => s.Id == i.UserId).FirstOrDefault();
@@ -491,6 +493,7 @@ namespace PerpustakaanApi.Controllers
                 {
                     Id = i.Id,
                     Name = i.Name,
+                    Tags = _context.BookGenres.Where(s => s.GenreId == i.Id).Count()
                 });
             }
             var category = _context.Categories.Where(s => s.Id == _context.Books.Where(s => s.Id == id).Select(s => s.Category).FirstOrDefault());
@@ -501,6 +504,7 @@ namespace PerpustakaanApi.Controllers
                 {
                     Id = category.FirstOrDefault().Id,
                     Name = category.FirstOrDefault().Name,
+                    Tags = _context.Books.Where(s => s.Category == category.FirstOrDefault().Id).Count()
                 };
             };
             var book = from s in _context.Books
