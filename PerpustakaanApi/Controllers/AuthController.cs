@@ -69,7 +69,6 @@ namespace PerpustakaanApi.Controllers
             }
         }
 
-
         [HttpPost("Register")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
