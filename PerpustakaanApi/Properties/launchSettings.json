@@ -12,11 +12,11 @@
     "PerpustakaanApi": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "http://192.168.1.1:8008/swagger",
+      "launchUrl": "http://192.168.21.1:8008/swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://192.168.1.1:8008",
+      "applicationUrl": "http://192.168.21.1:8008",
       "dotnetRunMessages": true
     },
     "IIS Express": {
