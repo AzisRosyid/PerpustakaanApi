@@ -33,16 +33,29 @@ namespace PerpustakaanApi
 
         public static object error(ModelStateDictionary st) => new { errors = st.Values.SelectMany(s => s.Errors).Select(s => s.ErrorMessage).FirstOrDefault() };
 
-        public static string Encode(User user)
+        public static string Encode(User user, bool st)
         {
             var handler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(secret);
-            var descriptor = new SecurityTokenDescriptor
+            var descriptor = new SecurityTokenDescriptor();
+            if (st)
             {
-                Subject = new ClaimsIdentity(new[] { new Claim("slt", Encrypt(user.Id.ToString())) }),
-                Expires = DateTime.UtcNow.AddHours(2),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
+                descriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(new[] { new Claim("slt", Encrypt(user.Id.ToString())) }),
+                    Expires = DateTime.UtcNow.AddDays(30),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                };
+            }
+            else
+            {
+                descriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(new[] { new Claim("slt", Encrypt(user.Id.ToString())) }),
+                    Expires = DateTime.UtcNow.AddHours(2),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                };
+            }
             var token = handler.CreateToken(descriptor);
             return handler.WriteToken(token);
         }

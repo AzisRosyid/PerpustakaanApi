@@ -77,7 +77,7 @@ namespace PerpustakaanApi.Controllers
         public async Task<ActionResult<IEnumerable<Book>>> GetBooks([FromForm] SearchBookParameter searchBookParameter)
         {
             string searchParameter = searchBookParameter.Search;
-            if (searchParameter == null) { searchParameter = String.Empty; }
+            if (searchParameter == null) { searchParameter = String.Empty; } 
 
             var st = new List<GetBookParameter>();
             var total = new List<Book>();

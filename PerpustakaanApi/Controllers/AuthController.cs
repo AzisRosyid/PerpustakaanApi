@@ -27,7 +27,7 @@ namespace PerpustakaanApi.Controllers
             if (st.Count() > 0 && st.Where(s => s.Password == Method.Encrypt(loginParameter.Password)).Count() > 0)
             {
                 var id = st.FirstOrDefault();
-                return Ok(new { Token = Method.Encode(id) });
+                return Ok(new { Token = Method.Encode(id, (bool)loginParameter.Android) });
             }
             return StatusCode(401, new { errors = "Email and Password does not correct!" });
         }
@@ -40,7 +40,7 @@ namespace PerpustakaanApi.Controllers
             if (!Method.Decode(auth()).IsValid) { return Unauthorized(new { errors = "Access Unautorized!" }); }
             var st = _context.Users.Where(s => s.Id == Method.Decode(auth()).Id);
             var email = st.FirstOrDefault();
-            return Ok(new { Token = Method.Encode(email) });
+            return Ok(new { Token = Method.Encode(email, false) });
         }
 
         string auth()
