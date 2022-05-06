@@ -88,31 +88,8 @@ namespace PerpustakaanApi.Controllers
             searchList.AddRange(searchParameter.Replace("&&", "").Replace("||", "").Split(" ").ToList());
             searchList.AddRange(searchParameter.Replace(" ", "").Replace("||", "").Split("&&").ToList());
 
-            foreach (var search in searchList)
+            void getBook(string search)
             {
-                if(search != "")
-                {
-                    var st1 = from s in _context.Books
-                              join c in _context.Categories on s.Category equals c.Id
-                              where c.Name.Contains(search)
-                              select s;
-                    var st2 = from s in _context.Books
-                              join t in _context.BookGenres on s.Id equals t.BookId
-                              join g in _context.Genres on t.GenreId equals g.Id
-                              where g.Name.Contains(search)
-                              select s;
-                    var st3 = from s in _context.Books
-                              join u in _context.Users on s.UserId equals u.Id
-                              where s.Id.Contains(search) || s.Title.Contains(search) || s.Author.Contains(search) || s.Publisher.Contains(search) || s.Description.Contains(search) || s.Page.ToString().Contains(search) || s.Image.Contains(search) || s.Download.Contains(search) || s.DateCreated.ToString().Contains(search) || s.DateUpdated.ToString().Contains(search) || u.Name.Contains(search)
-                              select s;
-
-                    total.AddRange(st1); total.AddRange(st2); total.AddRange(st3);
-                }
-            }
-
-            if (!total.Any())
-            {
-                var search = searchParameter;
                 var st1 = from s in _context.Books
                           join c in _context.Categories on s.Category equals c.Id
                           where c.Name.Contains(search)
@@ -128,16 +105,29 @@ namespace PerpustakaanApi.Controllers
                           select s;
 
                 total.AddRange(st1); total.AddRange(st2); total.AddRange(st3);
+
+                var totalCom = new List<Book>(); totalCom.AddRange(total);
+                total.Clear();
+                foreach (var i in totalCom)
+                {
+                    if (!total.Any(s => s.Id == i.Id))
+                    {
+                        total.Add(i);
+                    }
+                }
             }
 
-            var totalCom = new List<Book>(); totalCom.AddRange(total);
-            total.Clear();
-            foreach(var i in totalCom)
+            foreach (var search in searchList)
             {
-                if(!total.Any(s => s.Id == i.Id))
+                if(search != "")
                 {
-                    total.Add(i);
+                    getBook(search);
                 }
+            }
+
+            if (!total.Any())
+            {
+                getBook(searchParameter);
             }
 
             var searchList1 = new List<string>(); var searchList2 = new List<string>();
@@ -209,8 +199,10 @@ namespace PerpustakaanApi.Controllers
                     }
                 }
             }
-            
-            foreach(var i in total)
+
+            getBook(searchParameter);
+
+            foreach (var i in total)
             {
                 if(!st.Any(s => s.Id == i.Id))
                 {
@@ -570,8 +562,8 @@ namespace PerpustakaanApi.Controllers
             if (!BookExists(id)) { return NotFound(new { errors = "Book Not Found!" }); }
             if (valid.Role != UserRole.Admin && _context.Books.Where(s => s.Id == id).Select(s => s.UserId).FirstOrDefault() != valid.Id) { return StatusCode(403, new { errors = "User Role must be Admin or Owner!" }); }
             if (!ModelState.IsValid) { return BadRequest(Method.error(ModelState)); }
-            if (!_context.Categories.Any(s => s.Id == bookParameter.Category && bookParameter.Category != null)) { return BadRequest(new { errors = "Category Id Not Valid!" }); }
-            if (!_context.Users.Any(s => s.Id == bookParameter.User && bookParameter.Category != null)) { return BadRequest(new { errors = "User Id Not Valid!" }); }
+            if (!_context.Categories.Any(s => s.Id == bookParameter.Category) && bookParameter.Category.HasValue) { return BadRequest(new { errors = "Category Id Not Valid!" }); }
+            if (!_context.Users.Any(s => s.Id == bookParameter.User) && bookParameter.User.HasValue) { return BadRequest(new { errors = "User Id Not Valid!" }); }
 
             var genres = new List<int>();
 
@@ -586,7 +578,7 @@ namespace PerpustakaanApi.Controllers
                     genres.Add(i);
                 }
             }
-            else
+            else if (bookParameter.GenreIds != null)
             {
                 try
                 {
@@ -704,10 +696,11 @@ namespace PerpustakaanApi.Controllers
         public async Task<ActionResult<Book>> PostBook([FromForm] BookParameter bookParameter)
         {
             var valid = Method.Decode(auth());
+            
             if (!valid.IsValid) { return Unauthorized(new { errors = "Access Unauthorized!" }); } 
             if (!ModelState.IsValid) { return BadRequest(Method.error(ModelState)); }
-            if (!_context.Categories.Any(s => s.Id == bookParameter.Category && bookParameter.Category != null)) { return BadRequest(new { errors = "Category Id Not Valid!"}); }
-            if (!_context.Users.Any(s => s.Id == bookParameter.User && bookParameter.Category != null)) { return BadRequest(new { errors = "User Id Not Valid!" }); }
+            if (!_context.Categories.Any(s => s.Id == bookParameter.Category) && bookParameter.Category.HasValue) { return BadRequest(new { errors = "Category Id Not Valid!"}); }
+            if (!_context.Users.Any(s => s.Id == bookParameter.User) && bookParameter.User.HasValue) { return BadRequest(new { errors = "User Id Not Valid!" }); }
 
             var genres = new List<int>();
 
@@ -722,7 +715,7 @@ namespace PerpustakaanApi.Controllers
                     genres.Add(i);
                 }
             }
-            else
+            else if(bookParameter.GenreIds != null)
             {
                 try
                 {

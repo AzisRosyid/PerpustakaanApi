@@ -29,6 +29,18 @@ namespace PerpustakaanApi
             }
         }
 
+        public static bool validNumber(string s, bool st = false)
+        {
+            if (st)
+            {
+                return double.TryParse(s, out double t);
+            }
+            else
+            {
+                return long.TryParse(s, out long t);
+            }
+        }
+
         public static string Encrypt(string s) => Sha(Sha(s));
 
         public static object error(ModelStateDictionary st) => new { errors = st.Values.SelectMany(s => s.Errors).Select(s => s.ErrorMessage).FirstOrDefault() };
