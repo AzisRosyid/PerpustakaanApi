@@ -230,7 +230,7 @@ namespace PerpustakaanApi.Controllers
                     Directory.CreateDirectory(Method.profilePath);
                 }
 
-                img = DateTime.Now.ToString("yyyy_MM_dd_HHmmss_") + st.Email + path;
+                img = "Profile" + DateTime.Now.ToString("_yyyy_MM_dd_HHmmss_") + st.Email + path;
 
                 using (var stream = new FileStream(Method.profilePath + img, FileMode.Create))
                 {
