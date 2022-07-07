@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using PerpustakaanApi.Models;
 using PerpustakaanApi.Models.Parameter;
 using static PerpustakaanApi.Models.Enum.BookEnum;
+using static PerpustakaanApi.Models.Enum.ImageEnum;
 using static PerpustakaanApi.Models.Enum.OrderEnum;
 using static PerpustakaanApi.Models.Enum.UserEnum;
 
@@ -848,12 +849,33 @@ namespace PerpustakaanApi.Controllers
         [HttpGet("ImageBook/{image}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ImageBook(string image)
+        public async Task<IActionResult> ImageBook(string image, ImageQuality quality = ImageQuality.High)
         {
             try
             {
-                var file = System.IO.File.ReadAllBytes(Method.imgBookPath + image);
-                return File(file, "image/jpeg");
+                var info = new FileInfo($"{Method.imgBookPath}{image}");
+                if (quality != ImageQuality.High)
+                {
+                    string copyPath = String.Empty;
+                    if (quality == ImageQuality.Medium) copyPath = $"{Method.imgBookPath}Medium/";
+                    if (quality == ImageQuality.Low) copyPath = $"{Method.imgBookPath}Low/";
+                    if (!Directory.Exists(copyPath)) Directory.CreateDirectory(copyPath);
+                    copyPath = $"{copyPath}{image}";
+                    if (!System.IO.File.Exists(copyPath)) info.CopyTo(copyPath, true);
+                    else return File(System.IO.File.ReadAllBytes(copyPath), "image/jpeg"); 
+                    var copy = new FileInfo(copyPath);
+                    ImageOptimizer opt = new ImageOptimizer();
+                    opt.LosslessCompress(copy);
+                    copy.Refresh();
+                    using (var img = new MagickImage(copy.FullName))
+                    {
+                        if (quality == ImageQuality.Medium) img.Scale(img.Width / 2, 0);
+                        else if (quality == ImageQuality.Low) img.Scale(img.Width / 3, 0);
+                        img.Write(copy);
+                    }
+                    info = copy;
+                }
+                return File(System.IO.File.ReadAllBytes(info.FullName) , "image/jpeg");
             }
             catch
             {
