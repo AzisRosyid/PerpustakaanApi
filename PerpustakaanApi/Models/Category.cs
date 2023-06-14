@@ -1,18 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace PerpustakaanApi.Models
+namespace PerpustakaanApi.Models;
+
+public partial class Category
 {
-    public partial class Category
-    {
-        public Category()
-        {
-            Books = new HashSet<Book>();
-        }
+    public int Id { get; set; }
 
-        public int Id { get; set; }
-        public string Name { get; set; } = null!;
+    public string Name { get; set; } = null!;
 
-        public virtual ICollection<Book> Books { get; set; }
-    }
+    public virtual ICollection<Book> Books { get; set; } = new List<Book>();
 }

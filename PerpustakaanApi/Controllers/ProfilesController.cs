@@ -114,7 +114,7 @@ namespace PerpustakaanApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> PutProfile([FromForm] UserParameter userParameter)
+        public async Task<IActionResult> PutProfile([FromForm] ProfileParameter profileParameter)
         {
             var valid = Method.Decode(auth());
             if (!valid.IsValid) { return StatusCode(401, new { errors = "Access Unauthorized!" }); }
@@ -122,15 +122,15 @@ namespace PerpustakaanApi.Controllers
 
             var st = _context.Users.Where(s => s.Id == valid.Id).FirstOrDefault();
 
-            if (_context.Users.Any(s => s.Email == userParameter.Email && s.Email != st.Email))
+            if (_context.Users.Any(s => s.Email == profileParameter.Email && s.Email != st.Email))
             {
                 return Conflict(new { errors = "Email already exist!" });
             }
 
             string img = st.Image;
-            if (userParameter.Image != null)
+            if (profileParameter.Image != null)
             {
-                var path = Path.GetExtension(userParameter.Image.FileName);
+                var path = Path.GetExtension(profileParameter.Image.FileName);
                 if (!(path == ".jpg" || path == ".png" || path == ".jpeg"))
                 {
                     return StatusCode(400, new { errors = "Image format must be .png, .jpg, or .jpeg" });
@@ -150,18 +150,21 @@ namespace PerpustakaanApi.Controllers
                         var file = new FileInfo(Method.profilePath + st.Image);
                         file.Delete();
                     }
-                    userParameter.Image.CopyTo(stream);
+                    profileParameter.Image.CopyTo(stream);
                 }
             }
 
-            st.Email = userParameter.Email;
-            st.Name = userParameter.Name;
-            st.Password = Method.Encrypt(userParameter.Password);
-            st.Role = (int)userParameter.Role;
-            st.Gender = (int)userParameter.Gender;
-            st.DateOfBirth = userParameter.DateOfBirth;
-            st.PhoneNumber = userParameter.PhoneNumber;
-            st.Address = userParameter.Address;
+            st.Email = profileParameter.Email;
+            st.Name = profileParameter.Name;
+            if (profileParameter.Password != null)
+            {
+                st.Password = Method.Encrypt(profileParameter.Password);
+            }
+            st.Role = (int)profileParameter.Role;
+            st.Gender = (int)profileParameter.Gender;
+            st.DateOfBirth = profileParameter.DateOfBirth;
+            st.PhoneNumber = profileParameter.PhoneNumber;
+            st.Address = profileParameter.Address;
             st.Image = img;
             st.DateUpdated = DateTime.Now;
             _context.Entry(st).State = EntityState.Modified;

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
+using static PerpustakaanApi.Models.Enum.BookEnum;
 
 namespace PerpustakaanApi.Models.Parameter
 {
@@ -36,6 +37,8 @@ namespace PerpustakaanApi.Models.Parameter
         [BindRequired]
         [Required]
         public int Page { get; set; }
+
+        public BookStatus? Status { get; set; } 
         public IFormFile? Download { get; set; }
         public IFormFile? Image { get; set; }
     }

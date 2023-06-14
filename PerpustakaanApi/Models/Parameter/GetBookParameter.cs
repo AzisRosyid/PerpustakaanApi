@@ -1,4 +1,6 @@
-﻿namespace PerpustakaanApi.Models.Parameter
+﻿using static PerpustakaanApi.Models.Enum.BookEnum;
+
+namespace PerpustakaanApi.Models.Parameter
 {
     public class GetBookParameter
     {
@@ -14,6 +16,7 @@
         public string Download { get; set; }
         public string Image { get; set; }
         public long ViewCount { get; set; }
+        public BookStatus Status { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime DateUpdated { get; set; }
     }

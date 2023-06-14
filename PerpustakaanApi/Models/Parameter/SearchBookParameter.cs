@@ -13,6 +13,7 @@ namespace PerpustakaanApi.Models.Parameter
         public long? User { get; set; } = null;
         public int? Category { get; set; } = null;
         public List<int>? Genres { get; set; } = null;
+        public BookStatus? Status { get; set; } = null;
         public BookSort? Sort { get; set; } = null;
         public Order? Order { get; set; } = null;
         public DateTime? Start { get; set; } = null;

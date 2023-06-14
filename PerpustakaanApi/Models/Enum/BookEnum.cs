@@ -6,6 +6,15 @@ namespace PerpustakaanApi.Models.Enum
     public class BookEnum
     {
         [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum BookStatus
+        {
+            [EnumMember(Value = "Draf")]
+            Draf = 0,
+            [EnumMember(Value = "Publish")]
+            Publish = 1
+        }
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum BookSort
         {
             [EnumMember(Value = "Popularity")]

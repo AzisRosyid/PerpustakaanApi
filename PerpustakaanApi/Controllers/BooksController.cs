@@ -77,6 +77,7 @@ namespace PerpustakaanApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<Book>>> GetBooks([FromForm] SearchBookParameter searchBookParameter)
         {
+            var valid = Method.Decode(auth());
             string searchParameter = searchBookParameter.Search;
             if (searchParameter == null) { searchParameter = String.Empty; } 
 
@@ -93,7 +94,7 @@ namespace PerpustakaanApi.Controllers
             {
                 var st1 = from s in _context.Books
                           join c in _context.Categories on s.Category equals c.Id
-                          where c.Name.Contains(search)
+                          where c.Name.Contains(search) 
                           select s;
                 var st2 = from s in _context.Books
                           join t in _context.BookGenres on s.Id equals t.BookId
@@ -263,6 +264,7 @@ namespace PerpustakaanApi.Controllers
                         Download = i.Download,
                         Image = i.Image,
                         ViewCount = i.ViewCount,
+                        Status = (BookStatus)i.Status,
                         DateCreated = i.DateCreated,
                         DateUpdated = i.DateUpdated,
                     });
@@ -270,6 +272,28 @@ namespace PerpustakaanApi.Controllers
             };
 
             st = st.OrderBy(s => s.Id).ToList();
+            if (valid.Role == UserRole.Admin)
+            {
+                if (searchBookParameter.Status != null)
+                {
+                    st = st.Where(s => s.Status == searchBookParameter.Status).ToList();
+                }
+            }
+            else 
+            {
+                if (searchBookParameter.Status != null && valid.Role == UserRole.User)
+                {
+                    st = st.Where(s => s.Status == searchBookParameter.Status && s.User.Id == valid.Id).ToList();
+                }
+                else if (valid.Role == UserRole.User)
+                {
+                    st = st.Where(s => s.User.Id == valid.Id || s.Status == BookStatus.Publish).ToList();
+                }
+                else
+                {
+                    st = st.Where(s => s.Status == BookStatus.Publish).ToList();
+                }
+            }
 
             if (_context.Users.Any(s => s.Id == searchBookParameter.User))
             {
@@ -420,6 +444,7 @@ namespace PerpustakaanApi.Controllers
                     Publisher = s.Publisher,
                     Page = s.Page,
                     ViewCount = s.ViewCount,
+                    Status = s.Status,
                     Image = s.Image,
                     Description = s.Description,
                     DateCreated = s.DateCreated,
@@ -536,10 +561,17 @@ namespace PerpustakaanApi.Controllers
                     Download = st.s.Download,
                     Image = st.s.Image,
                     ViewCount = st.s.ViewCount,
+                    Status = (BookStatus)st.s.Status,
                     DateCreated = st.s.DateCreated,
                     DateUpdated = st.s.DateUpdated
                 }
             };
+
+            var valid = Method.Decode(auth());
+            if (valid.Id != result.Book.User.Id && valid.Role != UserRole.Admin && result.Book.Status == BookStatus.Draf)
+            {
+                return NotFound(new { errors = "Book Not Found!" });
+            }
 
             st.s.ViewCount += 1;
             _context.Entry(st.s).State = EntityState.Modified;
@@ -662,6 +694,10 @@ namespace PerpustakaanApi.Controllers
             st.Page = bookParameter.Page;
             st.Download = downBook;
             st.Image = imgBook;
+            if (valid.Role == UserRole.Admin)
+            {
+                st.Status = (int)bookParameter.Status;
+            }
             st.DateUpdated = DateTime.Now;
             _context.Entry(st).State = EntityState.Modified;
             await _context.SaveChangesAsync();
@@ -784,6 +820,14 @@ namespace PerpustakaanApi.Controllers
             st.Download = downBook;
             st.Image = imgBook;
             st.ViewCount = 0;
+            if (valid.Role == UserRole.Admin)
+            {
+                st.Status = bookParameter.Status == null ? (int)BookStatus.Draf : (int)bookParameter.Status;
+            }
+            else
+            {
+                st.Status = (int)BookStatus.Draf;
+            }
             st.DateCreated = DateTime.Now;
             st.DateUpdated = DateTime.Now;
             _context.Books.Add(st);
@@ -801,7 +845,6 @@ namespace PerpustakaanApi.Controllers
                     await _context.SaveChangesAsync();
                 }
             }
-            
 
             return Created("Book", new { messages = "Book successfully Created!" });
         }
